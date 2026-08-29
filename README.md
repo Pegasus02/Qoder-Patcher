@@ -4,7 +4,7 @@
 
 ## 当前状态
 
-本仓库当前位于 **v2.1 实验候选版**，目标版本为：
+本仓库当前版本为 **v2.1.1 experimental**，目标版本为：
 
 - Qoder CN Desktop `0.1.2`
 - Qoder CN Runtime / CLI `1.1.31`
@@ -17,6 +17,8 @@
 - 补丁前会校验版本哈希和代码锚点，并创建运行时备份。
 - `DryRun` 会检查直连路由注入，并使用 Node.js 校验生成后的 Worker Runtime 语法。
 - 从已安装的 v2 升级时，会从经过哈希校验的原始备份重新生成 v2.1 Runtime。
+- 已在 CPA `192.168.50.241:8317` 上完成真实对话验证。
+- 提供免安装 Windows GUI，可供同事双击使用。
 
 v2.1 的核心变化：
 
@@ -25,7 +27,7 @@ v2.1 的核心变化：
 - 请求复用 Qoder 自带的 `external-openai` SSE 传输，直接访问 `upstreamBaseUrl/chat/completions`。
 - 命中的自定义模型缺少 API Key 或上游 URL 时立即报错，不回退到 Qoder 网关。
 
-当前尚未执行安装后的 CPA 端到端对话验证，因此仍标记为实验版。详细设计和验收步骤见 [v2.1 计划](docs/v2.1-plan.md)，v2 的失败原因保留在 [v2 已知问题](docs/v2-known-issue.md)。
+详细设计和验收步骤见 [v2.1 计划](docs/v2.1-plan.md)，GUI 使用方法见 [GUI 指南](docs/gui.md)，v2 的失败原因保留在 [v2 已知问题](docs/v2-known-issue.md)。
 
 ## 项目结构
 
@@ -34,8 +36,26 @@ v2.1 的核心变化：
 ├── configs/   示例 Provider 配置，不包含 API Key
 ├── docs/      架构、研究结论和后续计划
 ├── src/       PowerShell 补丁器
-└── tests/     静态检查和 DryRun 入口
+├── tests/     静态检查和 DryRun 入口
+└── Launch-QoderCN-Patcher-GUI.cmd  GUI 双击启动器
 ```
+
+## GUI 使用
+
+将整个项目文件夹复制给同事，然后双击：
+
+```text
+Launch-QoderCN-Patcher-GUI.cmd
+```
+
+推荐顺序：
+
+1. 选择 Qoder CN 安装目录和 Provider JSON。
+2. 点击 `Inspect` 检查版本，再点击 `Dry Run`。
+3. 关闭 Qoder CN，点击 `Install / Upgrade` 并同意 Windows UAC。
+4. 安装完成后点击 `Launch Qoder CN`，在 Qoder 模型设置里填写 API Key。
+
+恢复时关闭 Qoder CN，然后点击 `Restore latest`。GUI 不保存或要求输入 API Key。
 
 ## 安全原则
 
@@ -82,12 +102,12 @@ v2.1 的核心变化：
   -BackupId '<backup-id>'
 ```
 
-## 下一步
+## 已验证的直连标志
 
-应用 v2.1 后，用配置中已有的模型发送最小测试消息，并在日志中确认出现：
+真实 CPA 对话已经通过。排障时可在日志中确认出现：
 
 ```text
 [ExternalProviderRequest] ... provider=qoder-cn-patcher
 ```
 
-同时确认不再出现该请求对应的 `[QoderInferRequest]`。通过这一步后，再把版本状态从实验候选版提升为已验证。
+同一请求不应进入 `[QoderInferRequest]` 云端发送路径。Qoder 更新后仍需重新检查 Runtime 哈希和注入锚点。

@@ -8,6 +8,8 @@ $ErrorActionPreference = 'Stop'
 
 $projectRoot = Split-Path -Parent $PSScriptRoot
 $patcher = Join-Path $projectRoot 'src\QoderCN-OpenAI-Compatible-Patcher.ps1'
+$gui = Join-Path $projectRoot 'src\QoderCN-Patcher-GUI.ps1'
+$guiLauncher = Join-Path $projectRoot 'Launch-QoderCN-Patcher-GUI.cmd'
 $config = Join-Path $projectRoot 'configs\cpa-192.168.50.241.json'
 $runtimeRelativePath = 'resources\app.asar.unpacked\node_modules\@qoder-ai\qoder-cn-agent-sdk\dist\_worker\qoder-worker-runtime.obf.mjs'
 $installedRuntime = Join-Path $InstallDir $runtimeRelativePath
@@ -26,6 +28,19 @@ if ($patcherRaw -notmatch 'QODER_CN_OAI_PATCH_V2_1' -or
     $patcherRaw -notmatch 'adapter:\"openai-compatible\"') {
     throw 'The v2.1 direct-route implementation is missing from the patcher source.'
 }
+
+Write-Host '[TEST] GUI syntax and self-test'
+if (-not (Test-Path -LiteralPath $guiLauncher -PathType Leaf)) {
+    throw 'The double-click GUI launcher is missing.'
+}
+$guiRaw = Get-Content -LiteralPath $gui -Raw
+$null = [ScriptBlock]::Create($guiRaw)
+if ($guiRaw -notmatch 'Invoke-PatcherElevated' -or
+    $guiRaw -notmatch 'Install / Upgrade' -or
+    $guiRaw -notmatch 'Restore latest') {
+    throw 'The GUI does not expose the required patch operations.'
+}
+& $gui -SelfTest
 
 Write-Host '[TEST] JavaScript URL normalization helper'
 $urlHelperMatch = [regex]::Match(
@@ -72,8 +87,8 @@ else {
 }
 
 Write-Host '[TEST] Project version'
-if ((Get-Content -LiteralPath $versionFile -Raw).Trim() -ne '2.1.0-experimental') {
-    throw 'VERSION does not identify the v2.1 experimental release.'
+if ((Get-Content -LiteralPath $versionFile -Raw).Trim() -ne '2.1.1-experimental') {
+    throw 'VERSION does not identify the v2.1.1 experimental release.'
 }
 
 Write-Host '[TEST] JSON configuration'

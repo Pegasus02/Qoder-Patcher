@@ -1,5 +1,13 @@
 # Changelog
 
+## 2.1.1-experimental - 2026-08-29
+
+- 增加免安装 WinForms GUI 和双击启动器。
+- GUI 支持配置选择、安装检查、DryRun、管理员安装/升级、恢复和启动 Qoder CN。
+- 管理员操作通过独立 UAC 进程执行，并将结果回传到 GUI 输出区。
+- 增加 GUI 非交互自检；API Key 仍不进入补丁配置或日志。
+- 在 CPA `192.168.50.241:8317` 上完成 v2.1 端到端对话验证。
+
 ## 2.1.0-experimental - 2026-08-29
 
 - 复用 Qoder 内置 `external-openai` 传输，将配置模型直接路由到 OpenAI-compatible 上游。
