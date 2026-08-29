@@ -91,7 +91,7 @@ Launch-QoderCN-Patcher-GUI.cmd
 & '.\src\QoderCN-OpenAI-Compatible-Patcher.ps1' -Action Inspect
 
 & '.\src\QoderCN-OpenAI-Compatible-Patcher.ps1' -Action DryRun `
-  -ConfigPath '.\configs\cpa-192.168.50.241.json'
+  -ConfigPath '.\configs\custom-provider.example.json'
 ```
 
 如果 `node` 不在 PATH 中，可通过 `-NodePath '<node.exe>'` 让 DryRun 对生成后的 Runtime 执行 JavaScript 语法检查。
@@ -119,7 +119,7 @@ Launch-QoderCN-Patcher-GUI.cmd
 
 ```powershell
 & '.\src\QoderCN-OpenAI-Compatible-Patcher.ps1' -Action Apply `
-  -ConfigPath '.\configs\cpa-192.168.50.241.json'
+  -ConfigPath '.\configs\custom-provider.example.json'
 ```
 
 恢复时使用应用输出中的备份号：
