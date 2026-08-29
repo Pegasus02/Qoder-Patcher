@@ -1,0 +1,16 @@
+{
+  "displayName": "Local OpenAI Compatible",
+  "replaceProviderIndex": 0,
+  "uiBaseUrl": "https://127.0.0.1:8000/v1",
+  "upstreamBaseUrl": "http://127.0.0.1:8000/v1",
+  "skipValidation": true,
+  "models": [
+    {
+      "id": "my-model",
+      "displayName": "My Model",
+      "maxInputTokens": 131072,
+      "vision": false,
+      "reasoning": false
+    }
+  ]
+}

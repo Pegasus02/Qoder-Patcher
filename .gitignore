@@ -1,0 +1,21 @@
+# Local work and generated files
+work/
+logs/
+backups/
+*.log
+*.tmp
+*.bak
+*.zip
+
+# Local configuration and secrets
+.env
+.env.*
+*.local.json
+*secret*.json
+*credentials*.json
+
+# Editor and OS files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

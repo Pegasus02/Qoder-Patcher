@@ -1,0 +1,86 @@
+{
+  "displayName": "CPA @ 192.168.50.241",
+  "replaceProviderIndex": 0,
+  "uiBaseUrl": "https://192.168.50.241:8317/v1",
+  "upstreamBaseUrl": "http://192.168.50.241:8317/v1",
+  "skipValidation": true,
+  "models": [
+    {
+      "id": "codex-auto-review",
+      "displayName": "Codex Auto Review",
+      "maxInputTokens": 272000,
+      "vision": false,
+      "reasoning": true
+    },
+    {
+      "id": "gpt-5.6-terra",
+      "displayName": "GPT-5.6 Terra",
+      "maxInputTokens": 272000,
+      "vision": false,
+      "reasoning": true
+    },
+    {
+      "id": "claude-opus-4-6-thinking",
+      "displayName": "Claude Opus 4.6 Thinking",
+      "maxInputTokens": 200000,
+      "vision": false,
+      "reasoning": true
+    },
+    {
+      "id": "claude-sonnet-4-6",
+      "displayName": "Claude Sonnet 4.6",
+      "maxInputTokens": 200000,
+      "vision": false,
+      "reasoning": true
+    },
+    {
+      "id": "gemini-3.7-flash-high",
+      "displayName": "Gemini 3.7 Flash High",
+      "maxInputTokens": 1048576,
+      "vision": false,
+      "reasoning": true
+    },
+    {
+      "id": "gpt-5.3-codex-spark",
+      "displayName": "GPT-5.3 Codex Spark",
+      "maxInputTokens": 128000,
+      "vision": false,
+      "reasoning": true
+    },
+    {
+      "id": "gpt-5.4",
+      "displayName": "GPT-5.4",
+      "maxInputTokens": 272000,
+      "vision": false,
+      "reasoning": true
+    },
+    {
+      "id": "gpt-5.4-mini",
+      "displayName": "GPT-5.4 Mini",
+      "maxInputTokens": 272000,
+      "vision": false,
+      "reasoning": true
+    },
+    {
+      "id": "gpt-5.5",
+      "displayName": "GPT-5.5",
+      "maxInputTokens": 272000,
+      "vision": false,
+      "reasoning": true
+    },
+    {
+      "id": "gpt-5.6-sol",
+      "displayName": "GPT-5.6 Sol",
+      "maxInputTokens": 272000,
+      "vision": false,
+      "reasoning": true
+    },
+    {
+      "id": "gpt-5.6-luna",
+      "displayName": "GPT-5.6 Luna",
+      "maxInputTokens": 272000,
+      "vision": false,
+      "reasoning": true
+    }
+  ]
+}
