@@ -1,48 +1,44 @@
-# GUI 指南 (Native EXE & PowerShell)
+# GUI 使用指南（v3.0.1）
 
-## 推荐方式：原生桌面程序 (`QoderCN-Patcher.exe` 或 `bin\QoderCN-Patcher.exe`)
+## 启动方式
 
-本项目提供**单文件免安装原生桌面 EXE 应用程序**。应用程序清单已集成管理员提权（UAC Shield），双击即可直接以管理员权限运行：
+推荐双击 `bin\QoderCN-Patcher.exe`，也可以运行根目录的 `Launch-QoderCN-Patcher-GUI.cmd`。启动器会优先使用原生 EXE；二进制缺失时才进入 PowerShell 备用界面。
 
-```text
-QoderCN-Patcher.exe
-或
-bin\QoderCN-Patcher.exe
+管理器默认以普通用户权限运行。Inspect、Dry Run、编辑配置、测试连接和启动 Qoder 都不会提权；只有 Install/Upgrade 与 Restore 会显示 Windows UAC 确认。
+
+## 配置与模型
+
+- `Qoder CN Directory`：目标安装目录。
+- `Profile File`：不含凭据的 Provider/模型 JSON。
+- `Upstream Base URL`：实际 OpenAI-compatible API 根地址。
+- `UI Base URL`：在 Qoder BYOK 界面中使用的地址。
+- `API Key`：输入框使用密码掩码。保存后由 Windows DPAPI CurrentUser 加密，密文位于 `%LOCALAPPDATA%\QoderCNOpenAICompatiblePatcher\secrets`。
+- `Test Conn`：使用内存中的 Key 请求上游 `/models`；不会把 Key写入日志。
+- 模型列表支持增删、双击编辑、勾选注入，以及 Token 上限、Tools、Reasoning、Vision 等属性。
+
+## API Key 运行逻辑
+
+1. Profile JSON 和 `~/.qoder-cn/custom-openai-provider-v3.0.1.json` 只保存非敏感配置。
+2. `Save Profile` 将 Key 用 DPAPI 加密；旧 profile 中的明文 `apiKey` 会在加载时自动迁移并从 JSON 删除。
+3. 点击 `Launch Qoder CN` 时，管理器只给新启动的 Qoder 进程设置 `QODER_CN_CUSTOM_PROVIDER_API_KEY`，随后不修改系统或用户级环境变量。
+4. 如果从开始菜单直接启动 Qoder，管理器保存的 Key不会自动注入；此时需要使用 Qoder 自己保存的 BYOK Key。
+5. 命中的自定义模型缺少 Key 或上游 URL 无效时会明确报错，不会回退到 Qoder 官方推理路由。
+
+## 操作按钮
+
+- `Save Profile`：保存无密钥 JSON，并更新 DPAPI 密文。
+- `Inspect`：检查 Runtime、`app.asar` 哈希和补丁状态。
+- `Dry Run`：从受验证的官方 Runtime 生成补丁并检查注入点。
+- `Install / Upgrade`：保存运行时配置、请求 UAC、创建/复用当前安装目录的备份并事务式安装 v3.0.1。
+- `Restore latest`：只从属于当前安装目录且 SHA-256 验证通过的备份恢复。
+- `Launch Qoder CN`：以普通用户权限启动 Qoder，并传递当前 profile 的临时 Key。
+
+## 签名说明
+
+正式发布应使用受信任代码签名证书：
+
+```powershell
+& '.\build.ps1' -Sign -CertificateThumbprint '<thumbprint>'
 ```
 
-### 构建与编译 (零依赖一键生成)
-如果需要重新构建或修改源码后编译，只需运行：
-- 双击根目录下的 `build.cmd`
-- 或在 PowerShell 中执行 `.\build.ps1`
-
-构建脚本自动调用 Windows 内置的 .NET Framework C# 编译器（`csc.exe`），无需安装 Visual Studio 或 .NET SDK。
-
-### 界面功能介绍
-
-1. **安装与运行状态卡片**
-   - 自动探测 Qoder CN 默认安装目录 `C:\Program Files\Qoder\Qoder CN`（支持自定义浏览）。
-   - 状态指示灯：
-     - 🟢 **已修补 (v2.1 原生直连 Direct Custom Routing)**
-     - 🟡 **官方原版 (已就绪，可随时修补)**
-     - 🔴 **未找到运行库文件**
-   - 实时检测 Qoder 运行进程，防止运行中修补造成冲突。
-
-2. **上游渠道与可视化模型管理**
-   - 预设配置下拉框：自动加载 `configs/*.json`，并支持【导入 JSON...】、【新建配置】、【打开目录】。
-   - 渠道参数编辑：直观修改渠道显示名称与上游 Base URL，并提供【测试连接】按钮验证上游服务是否可达。
-   - 模型列表表格：直观管理模型 ID、显示名称、思考/推理 (Reasoning)、视觉 (Vision)、工具调用 (Tools)，支持【+ 添加模型】与【- 删除所选】，点击【💾 保存配置】即可保存。
-
-3. **核心操作栏**
-   - 【🚀 一键安装 / 更新修补】：写入运行时配置并执行补丁，如果当前不是管理员权限且遇到 Program Files 写保护，将自动弹出 UAC 提权引导。
-   - 【🔄 恢复官方原版】：支持从历史备份或确定性逆向还原（Unpatch）安全还原官方原版。
-   - 【🔍 预演检测 (Dry Run)】：模拟检测修补锚点与 JSON 配置，不修改系统文件。
-   - 【⚡ 启动 Qoder CN】：一键拉起 Qoder CN 客户端。
-
-4. **实时彩色诊断日志**
-   - 底部黑色控制台卡片，按时间戳分色显示 Info (蓝)、OK (绿)、Warn (橙)、Error (红) 详细反馈。
-
----
-
-## 备用方式：PowerShell WinForms 脚本
-
-如需在轻量命令行环境下运行或排查问题，可双击根目录下的 `Launch-QoderCN-Patcher-GUI.cmd` 启动备用的 PowerShell GUI。
+本地开发可显式使用 `-CreateDevelopmentCertificate`，但该自签名证书只受当前 Windows 用户信任，不能替代公开受信任的发布证书。签名脚本只有在 Authenticode 状态为 `Valid` 时才返回成功。

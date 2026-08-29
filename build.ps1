@@ -1,111 +1,69 @@
 param(
-    [switch]$RunAfterBuild
+    [switch]$Sign,
+    [string]$CertificateThumbprint = '',
+    [switch]$CreateDevelopmentCertificate
 )
 
 $ErrorActionPreference = 'Stop'
+$ProjectRoot = $PSScriptRoot
+Set-Location $ProjectRoot
 
-$script:ProjectRoot = if (-not [string]::IsNullOrEmpty($PSScriptRoot)) { $PSScriptRoot } else { [IO.Directory]::GetCurrentDirectory() }
-$script:BinDir = [IO.Path]::Combine($script:ProjectRoot, 'bin')
-$script:OutExe = [IO.Path]::Combine($script:BinDir, 'QoderCN-Patcher.exe')
-$script:TempOut = [IO.Path]::Combine($script:BinDir, ("QoderCN-Patcher-" + [Guid]::NewGuid().ToString('N').Substring(0, 8) + ".exe"))
-$script:Manifest = [IO.Path]::Combine($script:ProjectRoot, 'src\gui\app.manifest')
-$script:RootExe = [IO.Path]::Combine($script:ProjectRoot, 'QoderCN-Patcher.exe')
-$script:StrayBinConfigs = [IO.Path]::Combine($script:BinDir, 'configs')
-
-$CscCandidates = @(
+$cscCandidates = @(
     'C:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe',
     'C:\Windows\Microsoft.NET\Framework\v4.0.30319\csc.exe'
 )
 
-$Csc = $null
-foreach ($cand in $CscCandidates) {
-    if (Test-Path -LiteralPath $cand -PathType Leaf) {
-        $Csc = $cand
+$csc = $null
+foreach ($candidate in $cscCandidates) {
+    if (Test-Path -LiteralPath $candidate -PathType Leaf) {
+        $csc = $candidate
         break
     }
 }
 
-if ($null -eq $Csc) {
-    throw 'Could not find csc.exe in Windows .NET Framework directory.'
+if ($null -eq $csc) {
+    throw '.NET Framework csc.exe compiler not found.'
 }
 
-if (-not (Test-Path -LiteralPath $script:BinDir -PathType Container)) {
-    $null = New-Item -ItemType Directory -Path $script:BinDir -Force
+$binDir = Join-Path $ProjectRoot 'bin'
+if (-not (Test-Path -LiteralPath $binDir -PathType Container)) {
+    New-Item -ItemType Directory -Path $binDir -Force | Out-Null
 }
 
-$Sources = @(
-    (Join-Path $script:ProjectRoot 'src\gui\Program.cs'),
-    (Join-Path $script:ProjectRoot 'src\gui\PatcherCore.cs'),
-    (Join-Path $script:ProjectRoot 'src\gui\MainForm.cs')
-)
+$outExe = Join-Path $binDir 'QoderCN-Patcher.exe'
+$manifest = Join-Path $ProjectRoot 'src-native\app.manifest'
+$icon = Join-Path $ProjectRoot 'src-native\app.ico'
+$refs = '/r:System.dll,System.Core.dll,System.Drawing.dll,System.Windows.Forms.dll,System.Web.Extensions.dll,System.Security.dll'
+$files = Get-ChildItem -Path (Join-Path $ProjectRoot 'src-native') -Filter '*.cs' -Recurse | Select-Object -ExpandProperty FullName
+$tempOut = Join-Path $binDir ("QoderCN-Patcher-{0}.tmp.exe" -f [Guid]::NewGuid().ToString('N').Substring(0, 8))
 
-$Refs = @(
-    'System.dll',
-    'System.Core.dll',
-    'System.Drawing.dll',
-    'System.Windows.Forms.dll',
-    'System.Web.Extensions.dll'
-)
+Write-Host "Compiling $outExe ..." -ForegroundColor Cyan
+& $csc /nologo /target:winexe /platform:anycpu /optimize+ "/out:$tempOut" "/win32manifest:$manifest" "/win32icon:$icon" $refs $files
 
-$CscArgs = @(
-    '/target:winexe',
-    "/out:$script:TempOut",
-    "/win32manifest:$script:Manifest",
-    '/platform:anycpu',
-    '/optimize+',
-    '/utf8output',
-    '/nologo'
-)
-
-foreach ($r in $Refs) {
-    $CscArgs += "/r:$r"
-}
-foreach ($s in $Sources) {
-    $CscArgs += $s
-}
-
-Write-Host '[BUILD] Compiling QoderCN-Patcher.exe...' -ForegroundColor Cyan
-Write-Host "[BUILD] Compiler: $Csc" -ForegroundColor DarkGray
-Write-Host "[BUILD] Output:   $script:OutExe" -ForegroundColor DarkGray
-
-& $Csc $CscArgs
 if ($LASTEXITCODE -ne 0) {
-    throw "Compilation failed with exit code: $LASTEXITCODE"
+    throw "csc.exe compilation failed with exit code $LASTEXITCODE"
 }
 
-# Move compiled output to bin directory
 try {
-    [IO.File]::Copy($script:TempOut, $script:OutExe, $true)
-    [IO.File]::Delete($script:TempOut)
+    Move-Item -LiteralPath $tempOut -Destination $outExe -Force -ErrorAction Stop
 }
 catch {
-    if (Test-Path -LiteralPath $script:TempOut) {
-        Remove-Item -LiteralPath $script:TempOut -Force -ErrorAction SilentlyContinue
+    if (Test-Path -LiteralPath $tempOut) {
+        Remove-Item -LiteralPath $tempOut -Force -ErrorAction SilentlyContinue
     }
-    Write-Host "[WARN] bin\QoderCN-Patcher.exe is currently running and locked by Windows. Please close the open patcher window to update the binary file." -ForegroundColor Yellow
+    throw "Unable to update $outExe because QoderCN-Patcher.exe is currently running. Please close the running application window and run build.cmd again."
 }
 
-if ([IO.File]::Exists($script:OutExe)) {
-    try {
-        Copy-Item -LiteralPath $script:OutExe -Destination $script:RootExe -Force
-        Write-Host "[OK] Root shortcut synced: $script:RootExe" -ForegroundColor Green
-    }
-    catch {
-        Write-Host "[WARN] Could not update root QoderCN-Patcher.exe because it is currently running." -ForegroundColor Yellow
-    }
-}
+Write-Host "[SUCCESS] Compiled $outExe" -ForegroundColor Green
+Write-Host "Signing requested: $([bool]$Sign)" -ForegroundColor DarkGray
 
-# Clean stray bin/configs if present
-if ([IO.Directory]::Exists($script:StrayBinConfigs)) {
-    try {
-        [IO.Directory]::Delete($script:StrayBinConfigs, $true)
+if ($Sign) {
+    $signScript = Join-Path $ProjectRoot 'scripts\Sign-Binary.ps1'
+    if (Test-Path -LiteralPath $signScript -PathType Leaf) {
+        $signArguments = @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', $signScript, '-BinaryPath', $outExe)
+        if (-not [string]::IsNullOrWhiteSpace($CertificateThumbprint)) { $signArguments += @('-CertificateThumbprint', $CertificateThumbprint) }
+        if ($CreateDevelopmentCertificate) { $signArguments += '-CreateDevelopmentCertificate' }
+        & powershell.exe $signArguments
+        if ($LASTEXITCODE -ne 0) { throw "Signing failed with exit code $LASTEXITCODE" }
     }
-    catch { }
-}
-
-$fileInfo = Get-Item -LiteralPath $script:OutExe
-Write-Host "[OK] Build succeeded: $($script:OutExe) ($([math]::Round($fileInfo.Length / 1KB, 2)) KB)" -ForegroundColor Green
-
-if ($RunAfterBuild) {
-    Start-Process -FilePath $script:RootExe
 }
