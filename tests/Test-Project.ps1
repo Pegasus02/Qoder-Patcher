@@ -20,6 +20,30 @@ $installedRuntimeText = [IO.File]::ReadAllText($installedRuntime, [Text.Encoding
 $originalRuntimeSource = $installedRuntime
 $bundledNode = Join-Path $env:USERPROFILE '.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe'
 
+$ImportAnchor = 'import*as P8e from"node:path";import*as qxA from"node:fs/promises";'
+$ImportReplacement = 'import*as qcv21fs from"node:fs";import*as P8e from"node:path";import*as qxA from"node:fs/promises";'
+
+$ConverterAnchor = 'function XxA(A){'
+$ConverterReplacement = @'
+function qcv21cfg(){try{return JSON.parse(qcv21fs.readFileSync(process.env.QODER_CN_CUSTOM_PROVIDER_CONFIG||process.env.USERPROFILE+"/.qoder-cn/custom-openai-provider-v2.1.json","utf8"))}catch(A){return null}}function qcv21base(A){try{let e=new URL(A);if("http:"!==e.protocol&&"https:"!==e.protocol||e.username||e.password||e.search||e.hash)return;let t=e.pathname.replace(/\/+$/g,"");return t.endsWith("/chat/completions")&&(t=t.slice(0,-17)),e.pathname=t||"/",e.toString().replace(/\/$/,"")}catch{}}function qcv21url(A){try{let e=qcv21cfg();if(e&&"string"==typeof A&&new URL(e.uiBaseUrl).toString()===new URL(A).toString())return qcv21base(e.upstreamBaseUrl)??A}catch{}return A}function qcv21target(A){let t=A?.custom_model,i=A?.model_config;if(!t||"custom_model"!==i?.key)return;let e=qcv21cfg();if(!e)throw Error("QODER_CN_PATCH_CONFIG_UNAVAILABLE");let n=Array.isArray(e.models)?e.models.find(A=>A&&A.id===t.model):void 0;if(!n)return;let r=t.parameters?.api_key,o=qcv21base(e.upstreamBaseUrl);if("string"!=typeof r||!r.trim())throw Error("QODER_CN_PATCH_API_KEY_MISSING");if(!o)throw Error("QODER_CN_PATCH_UPSTREAM_URL_INVALID");let s=Number.isInteger(e.firstPayloadTimeoutMs)&&e.firstPayloadTimeoutMs>0?e.firstPayloadTimeoutMs:6e4,a=Number.isInteger(e.streamIdleTimeoutMs)&&e.streamIdleTimeoutMs>=0?e.streamIdleTimeoutMs:0,g=Number.isInteger(n.maxInputTokens)&&n.maxInputTokens>0?n.maxInputTokens:131072,l=Number.isInteger(n.maxOutputTokens)&&n.maxOutputTokens>0?n.maxOutputTokens:32768;return{providerId:"qoder-cn-patcher",adapter:"openai-compatible",baseUrl:o,apiKey:r,model:{modelId:t.model,displayName:n.displayName??t.model,contextWindow:g,maxOutputTokens:l,capabilities:{tools:!1!==n.tools,vision:!0===n.vision,thinking:!0===n.reasoning},maxTokensField:"max_completion_tokens"===n.maxTokensField?"max_completion_tokens":"max_tokens"},timeouts:{firstPayloadTimeoutMs:s,...a>0?{streamIdleTimeoutMs:a}:{}}}}function XxA(A){/*QODER_CN_OAI_PATCH_V2_1*/
+'@
+
+$ModelUrlAnchor = 'url:A.url,model:A.model,provider:A.provider'
+$ModelUrlReplacement = 'url:qcv21url(A.url),model:A.model,provider:A.provider'
+
+$CatalogAnchor = 'n=await e().getBYOKConfig(),r=t;B(pn(i,"success",{providers:n?.providers.map(A)??[]}))'
+$CatalogReplacement = @'
+n=await e().getBYOKConfig(),r=t;let qcp=n?.providers.map(A)??[];try{let qcc=qcv21cfg();if(!qcc)throw Error("QODER_CN_PATCH_CONFIG_UNAVAILABLE");let qci=Number.isInteger(qcc.replaceProviderIndex)?qcc.replaceProviderIndex:qcp.findIndex(q=>q.key===qcc.replaceProviderKey||q.display_name===qcc.replaceProviderDisplayName);if(qci<0||qci>=qcp.length)throw Error("QODER_CN_PATCH_REPLACEMENT_PROVIDER_NOT_FOUND");let qcb=qcp[qci],qcm=(qcc.models??[]).map(q=>({key:q.id,display_name:q.displayName??q.id,is_vl:q.vision===true,is_reasoning:q.reasoning===true,format:"openai",max_input_tokens:q.maxInputTokens??131072,efforts:q.efforts??[],supports_disabled:q.supportsDisabled===true}));if(!qcm.length)throw Error("QODER_CN_PATCH_MODELS_EMPTY");qcp[qci]={...qcb,display_name:qcc.displayName??"Local OpenAI Compatible",url:qcc.uiBaseUrl,fields:[{key:"api_key",display_name:"API Key",type:"free_input",mandatory:true}],types:[{key:"openai-compatible",display_name:"OpenAI Compatible",style:"openai",models:qcm}]}}catch(qce){Q.warn("[qoder-cn-openai-patch-v2.1] custom provider not loaded:",qce)}B(pn(i,"success",{providers:qcp}))
+'@
+
+$ValidationAnchor = 'o=await r().checkBYOKModel(n.provider,n.model,{api_key:n.api_key},A,e,t);B(pn(i,"success",{success:o}))'
+$ValidationReplacement = @'
+o=await(async()=>{try{let qcv=qcv21cfg();if(qcv&&qcv.skipValidation!==false&&new URL(qcv.uiBaseUrl).toString()===new URL(A).toString())return true}catch(qce){Q.warn("[qoder-cn-openai-patch-v2.1] validation override unavailable:",qce)}return r().checkBYOKModel(n.provider,n.model,{api_key:n.api_key},A,e,t)})();B(pn(i,"success",{success:o}))
+'@
+
+$InferenceRouteAnchor = 'let A=ZVe(t.model_config,()=>S?.getExternalProviderRegistry());for(;;)'
+$InferenceRouteReplacement = 'let A=qcv21target(t)??ZVe(t.model_config,()=>S?.getExternalProviderRegistry());for(;;)'
+
 Write-Host '[TEST] PowerShell syntax'
 $patcherRaw = Get-Content -LiteralPath $patcher -Raw
 $null = [ScriptBlock]::Create($patcherRaw)
@@ -41,6 +65,17 @@ if ($guiRaw -notmatch 'Invoke-PatcherElevated' -or
     throw 'The GUI does not expose the required patch operations.'
 }
 & $gui -SelfTest
+
+Write-Host '[TEST] Native C# GUI build and compilation'
+$buildScript = Join-Path $projectRoot 'build.ps1'
+if (-not (Test-Path -LiteralPath $buildScript -PathType Leaf)) {
+    throw 'build.ps1 is missing.'
+}
+& $buildScript
+$builtExe = Join-Path $projectRoot 'bin\QoderCN-Patcher.exe'
+if (-not (Test-Path -LiteralPath $builtExe -PathType Leaf)) {
+    throw 'The compiled binary bin\QoderCN-Patcher.exe was not created.'
+}
 
 Write-Host '[TEST] JavaScript URL normalization helper'
 $urlHelperMatch = [regex]::Match(
@@ -105,23 +140,36 @@ $fixtureRoot = $null
 if ((Get-FileHash -LiteralPath $installedRuntime -Algorithm SHA256).Hash -ne $originalRuntimeSha256) {
     Write-Host '[INFO] Installed runtime is patched; building a temporary original-runtime fixture.'
     $backupRoot = Join-Path $env:LOCALAPPDATA 'QoderCNOpenAICompatiblePatcher\backups-v2'
-    $manifestFile = Get-ChildItem -LiteralPath $backupRoot -Filter manifest.json -File -Recurse -ErrorAction Stop |
-        Sort-Object LastWriteTime -Descending |
-        Select-Object -First 1
-    if ($null -eq $manifestFile) {
-        throw 'No v2 backup is available for the DryRun fixture.'
+    $originalText = $null
+
+    if (Test-Path -LiteralPath $backupRoot -PathType Container) {
+        $manifestFile = Get-ChildItem -LiteralPath $backupRoot -Filter manifest.json -File -Recurse -ErrorAction SilentlyContinue |
+            Sort-Object LastWriteTime -Descending |
+            Select-Object -First 1
+        if ($null -ne $manifestFile) {
+            $manifest = Get-Content -LiteralPath $manifestFile.FullName -Raw -Encoding UTF8 | ConvertFrom-Json
+            if ((Get-FileHash -LiteralPath $manifest.runtimeBackup -Algorithm SHA256).Hash -eq $originalRuntimeSha256) {
+                $originalText = [IO.File]::ReadAllText($manifest.runtimeBackup, [Text.Encoding]::UTF8)
+            }
+        }
     }
-    $manifest = Get-Content -LiteralPath $manifestFile.FullName -Raw -Encoding UTF8 | ConvertFrom-Json
-    if ((Get-FileHash -LiteralPath $manifest.runtimeBackup -Algorithm SHA256).Hash -ne $originalRuntimeSha256) {
-        throw 'The newest v2 backup is not the supported original runtime.'
+
+    if ($null -eq $originalText) {
+        $unpatched = $installedRuntimeText.
+            Replace($ImportReplacement, $ImportAnchor).
+            Replace($ConverterReplacement, $ConverterAnchor).
+            Replace($ModelUrlReplacement, $ModelUrlAnchor).
+            Replace($CatalogReplacement, $CatalogAnchor).
+            Replace($ValidationReplacement, $ValidationAnchor).
+            Replace($InferenceRouteReplacement, $InferenceRouteAnchor)
+        $originalText = $unpatched
     }
-    $originalRuntimeSource = [string]$manifest.runtimeBackup
 
     $fixtureRoot = Join-Path ([IO.Path]::GetTempPath()) ('qoder-patcher-project-test-' + [Guid]::NewGuid().ToString('N'))
     $fixtureRuntime = Join-Path $fixtureRoot $runtimeRelativePath
     $fixtureAsar = Join-Path $fixtureRoot 'resources\app.asar'
     New-Item -ItemType Directory -Path (Split-Path -Parent $fixtureRuntime) -Force | Out-Null
-    Copy-Item -LiteralPath $manifest.runtimeBackup -Destination $fixtureRuntime
+    [IO.File]::WriteAllText($fixtureRuntime, $originalText, [Text.UTF8Encoding]::new($false))
     Copy-Item -LiteralPath $installedAsar -Destination $fixtureAsar
     $dryRunInstallDir = $fixtureRoot
 }

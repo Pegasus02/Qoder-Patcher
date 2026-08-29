@@ -2,10 +2,12 @@
 
 ## 2.1.1-experimental - 2026-08-29
 
-- 增加免安装 WinForms GUI 和双击启动器。
-- GUI 支持配置选择、安装检查、DryRun、管理员安装/升级、恢复和启动 Qoder CN。
-- 管理员操作通过独立 UAC 进程执行，并将结果回传到 GUI 输出区。
-- 增加 GUI 非交互自检；API Key 仍不进入补丁配置或日志。
+- 新增**独立单文件原生 EXE 桌面程序** (`bin/QoderCN-Patcher.exe`)，体积约 60KB，零外部依赖，告别命令行与黑框终端。
+- 新增内置 `build.cmd` 与 `build.ps1` 一键编译脚本，自动调用 Windows 内置 .NET Framework C# 编译器 (`csc.exe`)。
+- 纯 C# 原生重写修补与备份引擎 (`PatcherCore.cs`)，支持脱离 PowerShell 独立运行，并增加确定性逆向还原（Unpatch）能力。
+- 全中文卡片式交互界面：状态指示卡片、可视化渠道与模型表格管理、上游 Base URL 连通性测试、彩色控制台诊断。
+- 支持优雅 UAC 提权引导与 Qoder CN 客户端一键拉起。
+- 保留免安装 WinForms GUI 脚本和双击启动器作为命令行后备支持。
 - 在 CPA `192.168.50.241:8317` 上完成 v2.1 端到端对话验证。
 
 ## 2.1.0-experimental - 2026-08-29

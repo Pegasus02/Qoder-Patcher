@@ -33,29 +33,38 @@ v2.1 的核心变化：
 
 ```text
 .
+├── bin/       编译输出目录（包含单文件原生可执行程序 QoderCN-Patcher.exe）
 ├── configs/   示例 Provider 配置，不包含 API Key
 ├── docs/      架构、研究结论和后续计划
-├── src/       PowerShell 补丁器
+├── src/       源码（包含 PowerShell 补丁脚本与 src/gui 原生 C# GUI 源码）
 ├── tests/     静态检查和 DryRun 入口
-└── Launch-QoderCN-Patcher-GUI.cmd  GUI 双击启动器
+├── build.cmd  Windows 双击一键编译脚本
+├── build.ps1  PowerShell 一键编译脚本
+└── Launch-QoderCN-Patcher-GUI.cmd  PowerShell 备用启动器
 ```
 
-## GUI 使用
+## 原生桌面 EXE 使用 (推荐)
 
-将整个项目文件夹复制给同事，然后双击：
+直接双击运行：
 
 ```text
-Launch-QoderCN-Patcher-GUI.cmd
+bin\QoderCN-Patcher.exe
 ```
 
-推荐顺序：
+如需重新编译生成 EXE，只需双击运行项目根目录的 `build.cmd`（或执行 `.\build.ps1`）。构建基于 Windows 10/11 内置的 .NET Framework 编译器，**无需安装任何额外 SDK 或运行库**。
 
-1. 选择 Qoder CN 安装目录和 Provider JSON。
-2. 点击 `Inspect` 检查版本，再点击 `Dry Run`。
-3. 关闭 Qoder CN，点击 `Install / Upgrade` 并同意 Windows UAC。
-4. 安装完成后点击 `Launch Qoder CN`，在 Qoder 模型设置里填写 API Key。
+### EXE 核心功能与操作流程：
+1. **状态卡片**：自动探测 Qoder CN 安装路径与当前运行库状态（🟢 已修补 v2.1 / 🟡 官方原版 / 🔴 异常）。
+2. **可视化配置与模型管理**：
+   - 下拉切换 `configs/` 预设配置。
+   - 直接在界面上编辑渠道名称、上游 Base URL 并提供【测试连接】按钮。
+   - 可视化添加/删除自定义模型（配置 ID、别名、Reasoning 思维链、Vision 视觉、Tools 工具调用），点【💾 保存配置】自动持久化。
+3. **一键操作**：
+   - 【🚀 一键安装 / 更新修补】：全自动备份原版、写入运行时配置并应用 v2.1 补丁（遇权限不足自动引导 UAC 提权）。
+   - 【🔄 恢复官方原版】：支持从备份或确定性逆向还原（Unpatch）一键回滚。
+   - 【⚡ 启动 Qoder CN】：修补完成后直接一键打开 Qoder CN。
 
-恢复时关闭 Qoder CN，然后点击 `Restore latest`。GUI 不保存或要求输入 API Key。
+*(原 PowerShell 脚本 `src/QoderCN-Patcher-GUI.ps1` 及 `Launch-QoderCN-Patcher-GUI.cmd` 仍保留作为命令行与备用后备模式。)*
 
 ## 安全原则
 
