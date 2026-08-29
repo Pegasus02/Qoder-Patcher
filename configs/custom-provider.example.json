@@ -4,11 +4,16 @@
   "uiBaseUrl": "https://127.0.0.1:8000/v1",
   "upstreamBaseUrl": "http://127.0.0.1:8000/v1",
   "skipValidation": true,
+  "firstPayloadTimeoutMs": 60000,
+  "streamIdleTimeoutMs": 300000,
   "models": [
     {
       "id": "my-model",
       "displayName": "My Model",
       "maxInputTokens": 131072,
+      "maxOutputTokens": 32768,
+      "maxTokensField": "max_tokens",
+      "tools": true,
       "vision": false,
       "reasoning": false
     }

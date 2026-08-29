@@ -27,13 +27,14 @@ The injected catalog entry reused an official Provider key to pass desktop valid
 
 This is not evidence of CPA downtime or an API-key authentication failure; the failed request did not reach CPA.
 
-## v2.1 direction
+## v2.1 resolution
 
-The next implementation should:
+v2.1 avoids the failing cloud-pool path rather than trying to make the Qoder gateway reach a LAN service:
 
-1. Persist a real `provider: custom` model instead of impersonating `bailian`.
-2. Populate both `custom_model.url` and `model_config.url` during Headless session policy construction.
-3. Preserve `format: openai` and the selected model id.
-4. Add a runtime guard that rejects a custom-model request if the resolved target remains Qoder's gateway.
-5. Require deletion and recreation of models saved by v2.
-6. Verify the resolved target in logs before sending an end-to-end test prompt.
+1. Match a BYOK request to a model declared in the local patch configuration.
+2. Reuse the API Key already loaded by Qoder for that BYOK model.
+3. Construct an `external-openai` target with the configured LAN base URL and model metadata.
+4. Let Qoder's built-in OpenAI-compatible SSE transport send the request directly.
+5. Throw locally when required direct-route data is missing, preventing cloud fallback.
+
+This design means a model saved under v2 can normally be reused; deletion and recreation should not be necessary. Installation-level CPA verification is still required before calling the issue fully closed.

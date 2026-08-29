@@ -4,6 +4,8 @@
   "uiBaseUrl": "https://192.168.50.241:8317/v1",
   "upstreamBaseUrl": "http://192.168.50.241:8317/v1",
   "skipValidation": true,
+  "firstPayloadTimeoutMs": 180000,
+  "streamIdleTimeoutMs": 300000,
   "models": [
     {
       "id": "codex-auto-review",

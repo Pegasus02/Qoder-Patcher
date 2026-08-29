@@ -4,7 +4,7 @@
 
 ## 当前状态
 
-本仓库保存的是 **v2 实验基线**，目标版本为：
+本仓库当前位于 **v2.1 实验候选版**，目标版本为：
 
 - Qoder CN Desktop `0.1.2`
 - Qoder CN Runtime / CLI `1.1.31`
@@ -15,15 +15,17 @@
 - 能在“设置 → 模型 → 添加模型”中注入自定义 Provider 和模型列表。
 - 补丁支持 `Inspect`、`DryRun`、`Apply`、`Restore`。
 - 补丁前会校验版本哈希和代码锚点，并创建运行时备份。
+- `DryRun` 会检查直连路由注入，并使用 Node.js 校验生成后的 Worker Runtime 语法。
+- 从已安装的 v2 升级时，会从经过哈希校验的原始备份重新生成 v2.1 Runtime。
 
-已知限制：
+v2.1 的核心变化：
 
-- 当前桌面端保存模型时仍将 Provider 记录为被替换的官方 Provider，例如 `bailian`。
-- 保存结果缺少自定义 URL，实际聊天请求仍会发送到 Qoder 网关。
-- Qoder 网关会返回 `400 Failed to generate custom pool`。
-- 因此 v2 **尚未实现端到端自定义模型调用**，请勿作为生产补丁使用。
+- 桌面端仍可复用现有 BYOK 界面保存 API Key。
+- Worker 根据配置中的模型 ID 构造本地 OpenAI-compatible 目标。
+- 请求复用 Qoder 自带的 `external-openai` SSE 传输，直接访问 `upstreamBaseUrl/chat/completions`。
+- 命中的自定义模型缺少 API Key 或上游 URL 时立即报错，不回退到 Qoder 网关。
 
-详细分析见 [v2 已知问题](docs/v2-known-issue.md)。
+当前尚未执行安装后的 CPA 端到端对话验证，因此仍标记为实验版。详细设计和验收步骤见 [v2.1 计划](docs/v2.1-plan.md)，v2 的失败原因保留在 [v2 已知问题](docs/v2-known-issue.md)。
 
 ## 项目结构
 
@@ -39,7 +41,7 @@
 
 - API Key 不写入项目配置、Git、日志或补丁器参数。
 - API Key 只能在 Qoder 的模型设置界面中输入。
-- v2 不修改 Electron 主包 `app.asar`。
+- v2.1 不修改 Electron 主包 `app.asar`。
 - Qoder 更新后必须重新验证哈希和注入锚点，不能强制打补丁。
 - 应用或恢复补丁前必须关闭 Qoder CN。
 
@@ -54,6 +56,8 @@
   -ConfigPath '.\configs\cpa-192.168.50.241.json'
 ```
 
+如果 `node` 不在 PATH 中，可通过 `-NodePath '<node.exe>'` 让 DryRun 对生成后的 Runtime 执行 JavaScript 语法检查。
+
 运行项目检查：
 
 ```powershell
@@ -62,7 +66,7 @@
 
 ## 应用与恢复
 
-> 当前 v2 存在端到端路由限制，通常只建议使用 `Inspect` 和 `DryRun`。
+建议先运行 `DryRun`。实际应用前关闭 Qoder CN，并确认已有可恢复的原始 Runtime 备份。
 
 如需研究性应用，关闭 Qoder CN 后，以管理员 PowerShell 运行：
 
@@ -80,4 +84,10 @@
 
 ## 下一步
 
-v2.1 需要把桌面端保存的模型转换为真正的 `provider: custom`，并确保 Headless 会话中的 `custom_model.url` 与 `model_config.url` 都包含自定义上游地址。在完成日志级目标地址验证前，不会将状态标记为可用。
+应用 v2.1 后，用配置中已有的模型发送最小测试消息，并在日志中确认出现：
+
+```text
+[ExternalProviderRequest] ... provider=qoder-cn-patcher
+```
+
+同时确认不再出现该请求对应的 `[QoderInferRequest]`。通过这一步后，再把版本状态从实验候选版提升为已验证。
