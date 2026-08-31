@@ -30,7 +30,10 @@ $SupportedRuntimeSha256 = 'c79c0cdcaba7f8eeacc5d8139add45d142c21f5354c03c0f4f1d8
 $SupportedAsarSha256 = 'f51f8b148ab29dfeb56716349ca660b2706cc18563a26a42ceae33185f191bef'
 
 if ([string]::IsNullOrWhiteSpace($ConfigPath)) {
-    $ConfigPath = Join-Path (Split-Path -Parent $PSScriptRoot) 'configs\cpa-192.168.50.241.json'
+    $parent = Split-Path -Parent $PSScriptRoot
+    $cpaPath = Join-Path $parent 'configs\cpa-192.168.50.241.json'
+    $examplePath = Join-Path $parent 'configs\custom-provider.example.json'
+    $ConfigPath = if (Test-Path -LiteralPath $cpaPath) { $cpaPath } else { $examplePath }
 }
 
 if ([string]::IsNullOrWhiteSpace($InstallDir)) {

@@ -11,7 +11,11 @@ $projectRoot = Split-Path -Parent $PSScriptRoot
 $patcher = Join-Path $projectRoot 'src\QoderCN-OpenAI-Compatible-Patcher.ps1'
 $gui = Join-Path $projectRoot 'src\QoderCN-Patcher-GUI.ps1'
 $guiLauncher = Join-Path $projectRoot 'Launch-QoderCN-Patcher-GUI.cmd'
-$config = Join-Path $projectRoot 'configs\cpa-192.168.50.241.json'
+$config = if (Test-Path -LiteralPath (Join-Path $projectRoot 'configs\cpa-192.168.50.241.json')) {
+    Join-Path $projectRoot 'configs\cpa-192.168.50.241.json'
+} else {
+    Join-Path $projectRoot 'configs\custom-provider.example.json'
+}
 $runtimeRelativePath = 'resources\app.asar.unpacked\node_modules\@qoder-ai\qoder-cn-agent-sdk\dist\_worker\qoder-worker-runtime.obf.mjs'
 
 if ([string]::IsNullOrWhiteSpace($InstallDir) -or -not (Test-Path -LiteralPath $InstallDir)) {
