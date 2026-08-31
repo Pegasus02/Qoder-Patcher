@@ -19,3 +19,7 @@ backups/
 Thumbs.db
 .idea/
 .vscode/
+
+# macOS Application bundles and temporary build outputs
+bin/*.app/
+bin/dmg_temp/

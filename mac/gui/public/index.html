@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Qoder CN Gateway Manager (macOS v3.2.0)</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Top Header -->
+    <header class="app-header">
+      <div class="header-left">
+        <div class="app-logo">⚡</div>
+        <div class="header-titles">
+          <h1>Qoder CN OpenAI-Compatible Gateway Manager</h1>
+          <div class="header-sub">macOS 原生运行时补丁与多模型路由管理 · <span class="version-badge">v3.2.0</span></div>
+        </div>
+      </div>
+      <div class="header-right">
+        <div id="status-pill" class="status-pill checking">
+          <span class="status-dot"></span>
+          <span id="status-pill-text">正在检测状态...</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Control Center Card -->
+    <section class="control-card">
+      <div class="control-row">
+        <div class="path-group">
+          <label for="install-path-input">Qoder CN 安装路径:</label>
+          <div class="input-with-actions">
+            <input type="text" id="install-path-input" value="/Applications/Qoder CN.app" spellcheck="false">
+            <button class="btn btn-secondary btn-sm" id="btn-browse-path" title="重新检测默认路径">🔍 检测</button>
+          </div>
+        </div>
+        <div class="main-actions">
+          <button class="btn btn-primary btn-large" id="btn-primary-action">
+            <span class="btn-icon">🚀</span>
+            <span id="btn-primary-text">一键安装 / 更新修补</span>
+          </button>
+          <button class="btn btn-secondary" id="btn-launch-qoder" title="启动或重启 Qoder CN">
+            <span class="btn-icon">⚡</span> 启动 Qoder
+          </button>
+          <button class="btn btn-secondary" id="btn-restore" title="还原到官方原版运行库">
+            <span class="btn-icon">🔄</span> 恢复官方原版
+          </button>
+          <button class="btn btn-secondary" id="btn-open-dir" title="打开配置文件存储目录">
+            <span class="btn-icon">📁</span> 打开配置目录
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Navigation Tabs -->
+    <nav class="nav-tabs">
+      <button class="tab-btn active" data-tab="tab-providers">
+        <span class="tab-icon">🌐</span> AI 提供方管理 (<span id="tab-provider-count">0</span>)
+      </button>
+      <button class="tab-btn" data-tab="tab-models">
+        <span class="tab-icon">🧠</span> 模型管理池与注入 (<span id="tab-model-count">0</span>)
+      </button>
+      <button class="tab-btn" data-tab="tab-logs">
+        <span class="tab-icon">📋</span> 活动日志与系统诊断
+      </button>
+    </nav>
+
+    <!-- Tab Contents -->
+    <main class="tab-contents">
+      <!-- Tab 1: Providers -->
+      <div id="tab-providers" class="tab-pane active">
+        <div class="pane-toolbar">
+          <div class="toolbar-left">
+            <button class="btn btn-success" id="btn-add-provider">
+              <span class="btn-icon">➕</span> 添加提供方
+            </button>
+            <div class="dropdown">
+              <button class="btn btn-secondary dropdown-toggle" id="btn-preset-menu">
+                <span class="btn-icon">⚡</span> 快速载入预设 ▾
+              </button>
+              <div class="dropdown-menu" id="preset-dropdown-menu">
+                <a href="#" data-preset="cpa">CPA 本地网关 (127.0.0.1:8317)</a>
+                <a href="#" data-preset="ollama">Ollama 本地服务 (11434)</a>
+                <a href="#" data-preset="siliconflow">SiliconFlow 硅基流动</a>
+                <a href="#" data-preset="deepseek">DeepSeek 官方 API</a>
+                <a href="#" data-preset="openai">OpenAI 官方 API</a>
+              </div>
+            </div>
+          </div>
+          <div class="toolbar-right">
+            <span class="hint-text">💡 配置修改后点击“保存并热重载”即可即时生效，无需重启 Qoder。</span>
+            <button class="btn btn-primary" id="btn-save-hotreload">
+              <span class="btn-icon">💾</span> 保存配置并热重载
+            </button>
+          </div>
+        </div>
+
+        <div id="providers-list" class="providers-grid">
+          <!-- Provider Cards will be injected dynamically -->
+        </div>
+      </div>
+
+      <!-- Tab 2: Models Pool -->
+      <div id="tab-models" class="tab-pane">
+        <div class="pane-toolbar">
+          <div class="toolbar-left">
+            <div class="filter-group">
+              <label for="filter-provider">提供方筛选:</label>
+              <select id="filter-provider">
+                <option value="all">全部提供方</option>
+              </select>
+            </div>
+            <div class="search-group">
+              <input type="text" id="search-model" placeholder="🔍 搜索模型名称或 ID..." spellcheck="false">
+            </div>
+            <button class="btn btn-secondary btn-sm" id="btn-select-all">全选</button>
+            <button class="btn btn-secondary btn-sm" id="btn-deselect-all">取消全选</button>
+          </div>
+          <div class="toolbar-right">
+            <span id="model-selection-stats" class="stats-badge">已勾选 0 / 0 个模型</span>
+            <button class="btn btn-success btn-sm" id="btn-add-custom-model">➕ 添加自定义模型</button>
+            <button class="btn btn-primary" id="btn-save-models-hotreload">
+              <span class="btn-icon">💾</span> 应用模型勾选并热重载
+            </button>
+          </div>
+        </div>
+
+        <div class="table-container">
+          <table class="data-table" id="models-table">
+            <thead>
+              <tr>
+                <th width="48" style="text-align: center;">注入</th>
+                <th>模型显示名称</th>
+                <th>模型 ID</th>
+                <th>所属提供方</th>
+                <th>特性能力</th>
+                <th>上下文上限 (Tokens)</th>
+                <th>最大输出 (Tokens)</th>
+                <th width="80">操作</th>
+              </tr>
+            </thead>
+            <tbody id="models-tbody">
+              <!-- Injected dynamically -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Tab 3: Logs -->
+      <div id="tab-logs" class="tab-pane">
+        <div class="pane-toolbar">
+          <div class="toolbar-left">
+            <span class="pane-title">实时活动日志与环境诊断</span>
+          </div>
+          <div class="toolbar-right">
+            <button class="btn btn-secondary btn-sm" id="btn-copy-logs">📋 复制日志</button>
+            <button class="btn btn-secondary btn-sm" id="btn-clear-logs">🗑️ 清空日志</button>
+          </div>
+        </div>
+
+        <div class="logs-console" id="logs-console">
+          <!-- Logs will be appended dynamically -->
+        </div>
+
+        <div class="diagnostics-card">
+          <h3>🔍 运行时诊断详情</h3>
+          <div class="diag-grid" id="diag-grid">
+            <div class="diag-item">
+              <span class="diag-label">Qoder App 路径:</span>
+              <span class="diag-val" id="diag-app-path">-</span>
+            </div>
+            <div class="diag-item">
+              <span class="diag-label">运行库文件 SHA-256:</span>
+              <span class="diag-val font-mono" id="diag-runtime-sha">-</span>
+            </div>
+            <div class="diag-item">
+              <span class="diag-label">App ASAR SHA-256:</span>
+              <span class="diag-val font-mono" id="diag-asar-sha">-</span>
+            </div>
+            <div class="diag-item">
+              <span class="diag-label">识别版本基线:</span>
+              <span class="diag-val" id="diag-version">-</span>
+            </div>
+            <div class="diag-item">
+              <span class="diag-label">加密密钥库目录:</span>
+              <span class="diag-val font-mono" id="diag-secret-dir">-</span>
+            </div>
+            <div class="diag-item">
+              <span class="diag-label">运行配置文件:</span>
+              <span class="diag-val font-mono" id="diag-config-path">-</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- Modal: Provider Edit -->
+    <div class="modal-overlay" id="modal-provider" style="display: none;">
+      <div class="modal-card">
+        <div class="modal-header">
+          <h2 id="modal-provider-title">编辑 AI 提供方</h2>
+          <button class="btn-close" id="btn-close-provider-modal">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="form-row">
+            <div class="form-group flex-1">
+              <label>提供方名称 <span class="required">*</span></label>
+              <input type="text" id="prov-name" placeholder="例如: CPA Gateway 或 SiliconFlow">
+            </div>
+            <div class="form-group" style="width: 140px;">
+              <label>启用状态</label>
+              <select id="prov-enabled">
+                <option value="true">🟢 启用</option>
+                <option value="false">⚪ 禁用</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>上游 Base URL (真实请求地址) <span class="required">*</span></label>
+            <input type="text" id="prov-base-url" placeholder="例如: http://127.0.0.1:8317/v1 或 https://api.deepseek.com/v1">
+            <span class="field-hint">支持本地 HTTP 及内网 IP，补丁引擎会将请求直接发送至此地址。</span>
+          </div>
+
+          <div class="form-group">
+            <label>UI 占位 URL (Qoder 界面展示地址)</label>
+            <input type="text" id="prov-ui-url" placeholder="留空则根据上游地址自动生成 HTTPS 别名">
+            <span class="field-hint">用于绕过 Qoder 界面对 HTTPS 格式的要求，通常无需手动修改。</span>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group flex-1">
+              <label>API Key (API 密钥)</label>
+              <div class="password-input-wrap">
+                <input type="password" id="prov-api-key" placeholder="输入新的 API Key（留空保持现有加密密钥）">
+                <button class="btn-toggle-pwd" id="btn-toggle-pwd" type="button">👁️</button>
+              </div>
+              <span class="field-hint" id="prov-key-status-hint">🔐 密钥将使用 AES-256 加密保存于本地，不写入任何配置文件。</span>
+            </div>
+            <div class="form-group" style="width: 160px;">
+              <label>替换 Provider 槽位</label>
+              <select id="prov-replace-key">
+                <option value="bailian">Alibaba Bailian (百炼)</option>
+                <option value="deepseek">DeepSeek</option>
+                <option value="anthropic">Anthropic (Claude)</option>
+                <option value="openai">OpenAI</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group flex-1">
+              <label>首包响应超时 (ms)</label>
+              <input type="number" id="prov-first-timeout" value="180000">
+            </div>
+            <div class="form-group flex-1">
+              <label>流式空闲超时 (ms)</label>
+              <input type="number" id="prov-stream-timeout" value="300000">
+            </div>
+          </div>
+
+          <div class="probe-action-box">
+            <button class="btn btn-info" id="btn-modal-probe" type="button">
+              <span class="btn-icon">📡</span> 测试连接并自动拉取模型 (/models)
+            </button>
+            <span id="probe-status-message" class="probe-msg"></span>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" id="btn-cancel-provider">取消</button>
+          <button class="btn btn-primary" id="btn-save-provider">保存提供方</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal: Model Edit -->
+    <div class="modal-overlay" id="modal-model" style="display: none;">
+      <div class="modal-card">
+        <div class="modal-header">
+          <h2 id="modal-model-title">编辑模型高级属性</h2>
+          <button class="btn-close" id="btn-close-model-modal">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="form-row">
+            <div class="form-group flex-1">
+              <label>模型 ID (唯一标识) <span class="required">*</span></label>
+              <input type="text" id="model-id" placeholder="例如: gpt-5.6-terra 或 deepseek-r1">
+            </div>
+            <div class="form-group flex-1">
+              <label>显示名称 (Display Name)</label>
+              <input type="text" id="model-display-name" placeholder="界面中显示的名称">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>所属提供方</label>
+            <select id="model-provider-select">
+              <!-- Injected dynamically -->
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>模型特性支持 (Capabilities)</label>
+            <div class="checkbox-group">
+              <label class="checkbox-label">
+                <input type="checkbox" id="model-cap-reasoning" checked>
+                <span>🧠 思考模式 (Reasoning / Thinking)</span>
+              </label>
+              <label class="checkbox-label">
+                <input type="checkbox" id="model-cap-tools" checked>
+                <span>🛠️ 工具调用 (Function Calling / Tools)</span>
+              </label>
+              <label class="checkbox-label">
+                <input type="checkbox" id="model-cap-vision">
+                <span>👁️ 多模态视觉 (Vision / VL)</span>
+              </label>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group flex-1">
+              <label>最大上下文输入 (Input Tokens)</label>
+              <input type="number" id="model-max-input" value="131072">
+            </div>
+            <div class="form-group flex-1">
+              <label>最大生成输出 (Output Tokens)</label>
+              <input type="number" id="model-max-output" value="32768">
+            </div>
+            <div class="form-group flex-1">
+              <label>Token 字段名</label>
+              <select id="model-tokens-field">
+                <option value="max_tokens">max_tokens (标准)</option>
+                <option value="max_completion_tokens">max_completion_tokens (o1/o3)</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" id="btn-cancel-model">取消</button>
+          <button class="btn btn-primary" id="btn-save-model">保存模型</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

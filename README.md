@@ -50,7 +50,40 @@
 └── Launch-QoderCN-Patcher-GUI.cmd  双击快速启动管理程序
 ```
 
-## 图形界面使用
+
+## macOS 版使用
+
+针对 Mac 用户，本项目提供完整的 macOS 原生适配套件（已适配 Qoder CN 0.1.3 / Runtime 1.1.35）：
+
+### 1. 可视化控制台 (推荐)
+双击根目录文件：
+```text
+Launch-QoderCN-Patcher-GUI-Mac.command
+```
+或在终端中运行：
+```bash
+./qoder-patcher-mac.sh gui
+```
+
+### 2. 命令行操作
+```bash
+# 状态检测
+./qoder-patcher-mac.sh inspect
+
+# 一键备份并应用补丁
+./qoder-patcher-mac.sh apply
+
+# 热重载配置 (无需重启 Qoder)
+./qoder-patcher-mac.sh hot-reload
+
+# 恢复官方原版运行库
+./qoder-patcher-mac.sh restore
+
+# 启动 Qoder CN
+./qoder-patcher-mac.sh launch
+```
+
+## Windows 图形界面使用
 
 推荐直接运行原生程序：
 
