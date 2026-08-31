@@ -91,6 +91,7 @@ try {
         (Join-Path $projectRoot 'src-native\PatcherEngine.cs'),
         (Join-Path $projectRoot 'src-native\ModelConfig.cs'),
         (Join-Path $projectRoot 'src-native\SecretStore.cs'),
+        (Join-Path $projectRoot 'src-native\UpstreamTester.cs'),
         (Join-Path $projectRoot 'tests\NativeEngineTests.cs')
     )
     & $csc /nologo /target:exe /platform:anycpu "/out:$nativeTests" `

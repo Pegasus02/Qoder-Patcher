@@ -25,6 +25,15 @@ namespace QoderCN.GatewayManager
 
     public static class UpstreamTester
     {
+        static UpstreamTester()
+        {
+            try
+            {
+                ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls | SecurityProtocolType.Tls11 | SecurityProtocolType.Tls12 | (SecurityProtocolType)12288;
+            }
+            catch { }
+        }
+
         public static TestResult TestConnection(string baseUrl, string apiKey)
         {
             return FetchModels(baseUrl, apiKey, false);
@@ -40,7 +49,15 @@ namespace QoderCN.GatewayManager
                 return result;
             }
 
-            string url = baseUrl.TrimEnd('/') + "/models";
+            try
+            {
+                ServicePointManager.SecurityProtocol |= SecurityProtocolType.Tls12 | (SecurityProtocolType)3072 | (SecurityProtocolType)12288;
+            }
+            catch { }
+
+            string clean = baseUrl.Trim().TrimEnd('/');
+            string url = clean.EndsWith("/models", StringComparison.OrdinalIgnoreCase) ? clean : (clean + "/models");
+
             Stopwatch sw = Stopwatch.StartNew();
             try
             {
@@ -52,7 +69,7 @@ namespace QoderCN.GatewayManager
                 {
                     request.Headers["Authorization"] = "Bearer " + apiKey.Trim();
                 }
-                request.UserAgent = "QoderCN-GatewayManager/3.2.0";
+                request.UserAgent = "QoderCN-GatewayManager/3.2.2";
 
                 using (HttpWebResponse response = (HttpWebResponse)request.GetResponse())
                 {
@@ -116,16 +133,17 @@ namespace QoderCN.GatewayManager
             try
             {
                 JavaScriptSerializer serializer = new JavaScriptSerializer();
+                serializer.MaxJsonLength = int.MaxValue;
                 object obj = serializer.DeserializeObject(responseJson.TrimStart('\uFEFF').Trim());
 
-                if (obj is Dictionary<string, object>)
+                if (obj is IDictionary)
                 {
-                    Dictionary<string, object> dict = (Dictionary<string, object>)obj;
+                    IDictionary dict = (IDictionary)obj;
 
                     // Standard OpenAI format: { "data": [ { "id": "..." } ] }
-                    if (dict.ContainsKey("data") && dict["data"] is ArrayList)
+                    if (dict.Contains("data") && dict["data"] is IEnumerable && !(dict["data"] is string))
                     {
-                        ArrayList dataList = (ArrayList)dict["data"];
+                        IEnumerable dataList = (IEnumerable)dict["data"];
                         foreach (object item in dataList)
                         {
                             ModelItem m = ParseSingleModelObject(item);
@@ -133,9 +151,9 @@ namespace QoderCN.GatewayManager
                         }
                     }
                     // Ollama format: { "models": [ { "name": "..." } ] }
-                    else if (dict.ContainsKey("models") && dict["models"] is ArrayList)
+                    else if (dict.Contains("models") && dict["models"] is IEnumerable && !(dict["models"] is string))
                     {
-                        ArrayList mList = (ArrayList)dict["models"];
+                        IEnumerable mList = (IEnumerable)dict["models"];
                         foreach (object item in mList)
                         {
                             ModelItem m = ParseSingleModelObject(item);
@@ -143,9 +161,9 @@ namespace QoderCN.GatewayManager
                         }
                     }
                 }
-                else if (obj is ArrayList)
+                else if (obj is IEnumerable && !(obj is string))
                 {
-                    ArrayList arr = (ArrayList)obj;
+                    IEnumerable arr = (IEnumerable)obj;
                     foreach (object item in arr)
                     {
                         ModelItem m = ParseSingleModelObject(item);
@@ -168,19 +186,21 @@ namespace QoderCN.GatewayManager
             string id = "";
             string name = "";
 
-            if (item is Dictionary<string, object>)
+            if (item is IDictionary)
             {
-                Dictionary<string, object> d = (Dictionary<string, object>)item;
-                if (d.ContainsKey("id") && d["id"] != null) id = d["id"].ToString();
-                else if (d.ContainsKey("name") && d["name"] != null) id = d["name"].ToString();
-                else if (d.ContainsKey("model") && d["model"] != null) id = d["model"].ToString();
+                IDictionary d = (IDictionary)item;
+                if (d.Contains("id") && d["id"] != null) id = d["id"].ToString();
+                else if (d.Contains("name") && d["name"] != null) id = d["name"].ToString();
+                else if (d.Contains("model") && d["model"] != null) id = d["model"].ToString();
 
-                if (d.ContainsKey("display_name") && d["display_name"] != null) name = d["display_name"].ToString();
-                else if (d.ContainsKey("name") && d["name"] != null) name = d["name"].ToString();
+                if (d.Contains("display_name") && d["display_name"] != null) name = d["display_name"].ToString();
+                else if (d.Contains("name") && d["name"] != null) name = d["name"].ToString();
+                else if (d.Contains("id") && d["id"] != null) name = d["id"].ToString();
             }
             else if (item is string)
             {
                 id = item.ToString();
+                name = id;
             }
 
             if (string.IsNullOrWhiteSpace(id)) return null;

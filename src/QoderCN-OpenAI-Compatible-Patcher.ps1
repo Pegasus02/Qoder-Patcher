@@ -502,7 +502,7 @@ switch ($Action) {
     'Inspect' {
         $state = Get-TargetState $runtimePath $asarPath
         Write-Host ''
-        Write-Host 'Qoder CN OpenAI-compatible runtime patch v3.2.0-beta' -ForegroundColor White
+        Write-Host 'Qoder CN OpenAI-compatible runtime patch v3.2.2' -ForegroundColor White
         Write-Host "  Install directory   : $([IO.Path]::GetFullPath($InstallDir))"
         Write-Host "  Detected profile    : $($state.DetectedVersion)"
         Write-Host "  Runtime patched     : $($state.RuntimePatched)"

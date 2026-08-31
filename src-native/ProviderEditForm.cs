@@ -334,6 +334,27 @@ namespace QoderCN.GatewayManager
                 SecretStore.DeleteProviderKey(Provider.id);
             }
 
+            if (DiscoveredAny && DiscoveredModels != null && DiscoveredModels.Count > 0)
+            {
+                foreach (ModelItem dm in DiscoveredModels)
+                {
+                    dm.providerId = Provider.id;
+                    dm.providerName = Provider.name;
+                    dm.upstreamBaseUrl = Provider.baseUrl;
+                    dm.uiBaseUrl = Provider.GetEffectiveUiUrl();
+
+                    int existingIdx = Provider.models.FindIndex(m => m.id.Equals(dm.id, StringComparison.OrdinalIgnoreCase));
+                    if (existingIdx >= 0)
+                    {
+                        Provider.models[existingIdx] = dm;
+                    }
+                    else
+                    {
+                        Provider.models.Add(dm);
+                    }
+                }
+            }
+
             DialogResult = DialogResult.OK;
             Close();
         }

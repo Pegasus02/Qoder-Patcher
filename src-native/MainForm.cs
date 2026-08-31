@@ -233,7 +233,7 @@ namespace QoderCN.GatewayManager
 
         private void InitializeComponents()
         {
-            Text = "Qoder CN AI Gateway Manager v3.2.1";
+            Text = "Qoder CN AI Gateway Manager v3.2.2";
             StartPosition = FormStartPosition.CenterScreen;
             Size = new Size(1100, 780);
             MinimumSize = new Size(980, 640);
@@ -1002,6 +1002,14 @@ namespace QoderCN.GatewayManager
                 if (form.ShowDialog(this) == DialogResult.OK && form.Provider != null)
                 {
                     workspace.providers.Add(form.Provider);
+                    if (form.Provider.models != null)
+                    {
+                        foreach (ModelItem m in form.Provider.models)
+                        {
+                            checkedModelKeys.Add(string.Format("{0}::{1}", form.Provider.id, m.id));
+                            checkedModelKeys.Add(m.id);
+                        }
+                    }
                     workspace.SaveToFile(workspaceFilePath);
                     RefreshProviderList();
                     RefreshProviderFilterCombo();
@@ -1021,6 +1029,14 @@ namespace QoderCN.GatewayManager
             {
                 if (form.ShowDialog(this) == DialogResult.OK)
                 {
+                    if (p.models != null)
+                    {
+                        foreach (ModelItem m in p.models)
+                        {
+                            checkedModelKeys.Add(string.Format("{0}::{1}", p.id, m.id));
+                            checkedModelKeys.Add(m.id);
+                        }
+                    }
                     workspace.SaveToFile(workspaceFilePath);
                     RefreshProviderList();
                     RefreshProviderFilterCombo();
@@ -1738,7 +1754,7 @@ namespace QoderCN.GatewayManager
                 string inst = installText.Text.Trim();
                 TargetState state = PatcherEngine.GetTargetState(inst);
 
-                AppendLog("--- Qoder CN Inspection (v3.2.1) ---", Color.Black);
+                AppendLog("--- Qoder CN Inspection (v3.2.2) ---", Color.Black);
                 AppendLog(string.Format("Install directory: {0}", Path.GetFullPath(inst)), Color.Black);
                 AppendLog(string.Format("Detected profile : {0}", string.IsNullOrEmpty(state.DetectedVersion) ? "unknown" : state.DetectedVersion), Color.Black);
                 AppendLog(string.Format("Runtime patched  : {0} (Marker: {1})", state.RuntimePatched, PatcherEngine.PatchMarker), Color.Black);

@@ -224,6 +224,36 @@ internal static class NativeEngineTests
         Assert(File.ReadAllText(runtimeA, Encoding.UTF8) == "original-a", "Restore did not use the matching installation backup.");
     }
 
+    private static void TestUpstreamModelDiscovery()
+    {
+        // 1. OpenAI Format
+        string openaiJson = "{\"object\":\"list\",\"data\":[{\"id\":\"gpt-4o\",\"object\":\"model\",\"display_name\":\"GPT-4o Omniscience\"},{\"id\":\"deepseek-ai/DeepSeek-R1\",\"object\":\"model\"}]}";
+        List<ModelItem> openaiModels = UpstreamTester.ParseModelsResponse(openaiJson);
+        Assert(openaiModels.Count == 2, "OpenAI format model count mismatch, expected 2, got " + openaiModels.Count);
+        Assert(openaiModels[0].id == "gpt-4o", "OpenAI model 0 id mismatch");
+        Assert(openaiModels[0].displayName == "GPT-4o Omniscience", "OpenAI model 0 displayName mismatch");
+        Assert(openaiModels[0].vision == true, "OpenAI model 0 vision flag mismatch");
+        Assert(openaiModels[1].id == "deepseek-ai/DeepSeek-R1", "OpenAI model 1 id mismatch");
+        Assert(openaiModels[1].reasoning == true, "OpenAI model 1 reasoning flag mismatch");
+
+        // 2. Ollama Format
+        string ollamaJson = "{\"models\":[{\"name\":\"llama3:8b\",\"model\":\"llama3:8b\"},{\"name\":\"deepseek-r1:14b\",\"model\":\"deepseek-r1:14b\"}]}";
+        List<ModelItem> ollamaModels = UpstreamTester.ParseModelsResponse(ollamaJson);
+        Assert(ollamaModels.Count == 2, "Ollama format model count mismatch, expected 2, got " + ollamaModels.Count);
+        Assert(ollamaModels[0].id == "llama3:8b", "Ollama model 0 id mismatch");
+        Assert(ollamaModels[1].id == "deepseek-r1:14b", "Ollama model 1 id mismatch");
+        Assert(ollamaModels[1].reasoning == true, "Ollama model 1 reasoning flag mismatch");
+
+        // 3. Raw Array Format
+        string rawArrayJson = "[{\"id\":\"claude-3-7-sonnet\"},{\"id\":\"qwen-vl-max\"}]";
+        List<ModelItem> rawModels = UpstreamTester.ParseModelsResponse(rawArrayJson);
+        Assert(rawModels.Count == 2, "Raw array model count mismatch, expected 2, got " + rawModels.Count);
+        Assert(rawModels[0].id == "claude-3-7-sonnet", "Raw model 0 id mismatch");
+        Assert(rawModels[0].vision == true, "Raw model 0 vision flag mismatch");
+        Assert(rawModels[1].id == "qwen-vl-max", "Raw model 1 id mismatch");
+        Assert(rawModels[1].vision == true, "Raw model 1 vision flag mismatch");
+    }
+
     public static int Main()
     {
         string root = Path.Combine(Path.GetTempPath(), "qoder-native-tests-" + Guid.NewGuid().ToString("N"));
@@ -250,6 +280,9 @@ internal static class NativeEngineTests
 
             Console.WriteLine("[RUN] Testing backup isolation and restore verification...");
             TestBackupIsolation(root);
+
+            Console.WriteLine("[RUN] Testing upstream model discovery and JSON deserialization...");
+            TestUpstreamModelDiscovery();
 
             Console.WriteLine("[OK] All native engine P0 acceptance tests passed!");
             return 0;

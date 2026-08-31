@@ -1,5 +1,14 @@
 # Changelog
 
+## 3.2.2 - 2026-09-01
+
+- **修复 Windows 原生客户端 Provider 模型列表解析与拉取问题**：
+  - 修复 `JavaScriptSerializer` 反序列化 JSON 数组为 `object[]` 时未能正确匹配 `IEnumerable` 导致模型列表被判为空（`DiscoveredModels.Count == 0`）的关键 Bug。
+  - 兼容 OpenAI 标准格式（`{ "data": [ ... ] }`）、Ollama 格式（`{ "models": [ ... ] }`）及直接数组格式（`[ ... ]`）。
+  - 优化 Base URL 规范化逻辑，智能处理带 `/models` 或不带后缀的上游地址。
+  - 显式启用 .NET 运行时的 TLS 1.2 / TLS 1.3 现代加密协议，确保对主流商业 AI 网关 HTTPS 端点的连通性与模型拉取。
+  - 在 Provider 添加/编辑弹窗中保存时，自动将探测到的可用模型同步注入工作区模型池。
+
 ## 3.2.1 - 2026-09-01
 
 - **支持 Qoder CN 新版运行时 (v1.1.35 / Qoder 0.1.3+)**：
