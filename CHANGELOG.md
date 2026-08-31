@@ -1,5 +1,15 @@
 # Changelog
 
+## 3.2.1 - 2026-09-01
+
+- **支持 Qoder CN 新版运行时 (v1.1.35 / Qoder 0.1.3+)**：
+  - 逆向并提取 Qoder CN 新版 Worker Runtime (`1.1.35`) 混淆重构后的全新注入特征点（`TvA`, `bje`, `ree`, `FIo` 等）。
+  - 实现双版本基线动态匹配引擎（Dual-Baseline Engine），同时无缝兼容支持 Qoder CN `1.1.35` (Qoder 0.1.3+) 与 `1.1.31` (Qoder 0.1.2)。
+- **安装路径自动探测增强 (Auto Installation Discovery)**：
+  - 自动检测并优先匹配当前用户的安装目录（`%LOCALAPPDATA%\Programs\Qoder CN`）以及全局目录（`%ProgramFiles%\Qoder\Qoder CN`），解决非管理员单用户安装无法自动定位的问题。
+- **稳定性与测试验证**：
+  - 更新原生引擎与自动化测试套件，全面覆盖双版本补丁生成、Node.js 语法校验与安全回滚链。
+
 ## 3.2.0 - 2026-08-29
 
 - **多 AI Provider 统一管理与按需模型注入架构 (Multi-Provider & Unified Model Pool)**：

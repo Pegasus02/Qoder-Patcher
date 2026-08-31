@@ -31,3 +31,4 @@ Thumbs.db
 # macOS Application bundles and temporary build outputs
 bin/*.app/
 bin/dmg_temp/
+ide-analysis/

@@ -233,7 +233,7 @@ namespace QoderCN.GatewayManager
 
         private void InitializeComponents()
         {
-            Text = "Qoder CN AI Gateway Manager v3.2.0-beta";
+            Text = "Qoder CN AI Gateway Manager v3.2.1";
             StartPosition = FormStartPosition.CenterScreen;
             Size = new Size(1100, 780);
             MinimumSize = new Size(980, 640);
@@ -344,7 +344,7 @@ namespace QoderCN.GatewayManager
 
             installText = new TextBox
             {
-                Text = @"C:\Program Files\Qoder\Qoder CN",
+                Text = PatcherEngine.GetDefaultInstallDir(),
                 Dock = DockStyle.Fill,
                 Margin = new Padding(0, 0, 8, 0)
             };
@@ -1366,7 +1366,7 @@ namespace QoderCN.GatewayManager
             }
 
             if (!targetState.RuntimePatched && !targetState.PreviousRuntimePatched &&
-                !string.Equals(targetState.RuntimeSha256, PatcherEngine.SupportedRuntimeSha256, StringComparison.OrdinalIgnoreCase))
+                !PatcherEngine.IsSupportedRuntimeSha(targetState.RuntimeSha256))
             {
                 detailMessage = "Unknown runtime binary checksum. Inspect before continuing.";
                 return GuiState.IncompatibleRuntime;
@@ -1738,8 +1738,9 @@ namespace QoderCN.GatewayManager
                 string inst = installText.Text.Trim();
                 TargetState state = PatcherEngine.GetTargetState(inst);
 
-                AppendLog("--- Qoder CN Inspection (v3.2.0-beta) ---", Color.Black);
+                AppendLog("--- Qoder CN Inspection (v3.2.1) ---", Color.Black);
                 AppendLog(string.Format("Install directory: {0}", Path.GetFullPath(inst)), Color.Black);
+                AppendLog(string.Format("Detected profile : {0}", string.IsNullOrEmpty(state.DetectedVersion) ? "unknown" : state.DetectedVersion), Color.Black);
                 AppendLog(string.Format("Runtime patched  : {0} (Marker: {1})", state.RuntimePatched, PatcherEngine.PatchMarker), Color.Black);
                 AppendLog(string.Format("Older patch      : {0}", state.PreviousRuntimePatched), Color.Black);
                 AppendLog(string.Format("app.asar intact  : {0}", state.AppAsarUnmodified), Color.Black);
