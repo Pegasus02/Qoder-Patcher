@@ -1,4 +1,5 @@
 param(
+    [switch]$Beta,
     [switch]$Sign,
     [string]$CertificateThumbprint = '',
     [switch]$CreateDevelopmentCertificate
@@ -30,7 +31,8 @@ if (-not (Test-Path -LiteralPath $binDir -PathType Container)) {
     New-Item -ItemType Directory -Path $binDir -Force | Out-Null
 }
 
-$outExe = Join-Path $binDir 'QoderCN-Patcher.exe'
+$exeName = if ($Beta) { 'QoderCN-Patcher-Beta.exe' } else { 'QoderCN-Patcher.exe' }
+$outExe = Join-Path $binDir $exeName
 $manifest = Join-Path $ProjectRoot 'src-native\app.manifest'
 $icon = Join-Path $ProjectRoot 'src-native\app.ico'
 $refs = '/r:System.dll,System.Core.dll,System.Drawing.dll,System.Windows.Forms.dll,System.Web.Extensions.dll,System.Security.dll'

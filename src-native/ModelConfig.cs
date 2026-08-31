@@ -657,6 +657,7 @@ namespace QoderCN.GatewayManager
         public bool AppAsarUnmodified { get; set; }
         public string RuntimeSha256 { get; set; }
         public string AsarSha256 { get; set; }
+        public string DetectedVersion { get; set; }
         public int ImportAnchorCount { get; set; }
         public int ConverterAnchorCount { get; set; }
         public int ModelUrlAnchorCount { get; set; }

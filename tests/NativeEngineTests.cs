@@ -12,19 +12,39 @@ internal static class NativeEngineTests
         if (!condition) throw new InvalidOperationException(message);
     }
 
-    private static string BuildOriginalFixture()
+    private static string BuildV1135Fixture()
     {
         return string.Join("\n", new string[] {
-            PatcherEngine.ImportAnchor,
-            PatcherEngine.ConverterAnchor,
+            PatcherEngine.ImportAnchor_v1135,
+            PatcherEngine.ConverterAnchor_v1135,
             PatcherEngine.ModelUrlAnchor,
-            PatcherEngine.CatalogAnchor,
-            PatcherEngine.ValidationAnchor,
-            PatcherEngine.InferenceRouteAnchor,
-            PatcherEngine.StartupBYOKAnchor,
-            PatcherEngine.ModelListAnchor,
+            PatcherEngine.CatalogAnchor_v1135,
+            PatcherEngine.ValidationAnchor_v1135,
+            PatcherEngine.InferenceRouteAnchor_v1135,
+            PatcherEngine.StartupBYOKAnchor_v1135,
+            PatcherEngine.ModelListAnchor_v1135,
             PatcherEngine.GetModelAnchor
         });
+    }
+
+    private static string BuildV1131Fixture()
+    {
+        return string.Join("\n", new string[] {
+            PatcherEngine.ImportAnchor_v1131,
+            PatcherEngine.ConverterAnchor_v1131,
+            PatcherEngine.ModelUrlAnchor,
+            PatcherEngine.CatalogAnchor_v1131,
+            PatcherEngine.ValidationAnchor_v1131,
+            PatcherEngine.InferenceRouteAnchor_v1131,
+            PatcherEngine.StartupBYOKAnchor_v1131,
+            PatcherEngine.ModelListAnchor_v1131,
+            PatcherEngine.GetModelAnchor
+        });
+    }
+
+    private static string BuildOriginalFixture()
+    {
+        return BuildV1135Fixture();
     }
 
     private static void TestProfileAndSecretStorage(string root)
@@ -126,14 +146,18 @@ internal static class NativeEngineTests
 
     private static void TestPatchRoutingAndFallbackChain()
     {
-        string patched = PatcherEngine.PatchRuntimeText(BuildOriginalFixture());
-        Assert(patched.Contains(PatcherEngine.PatchMarker), "Current v3.2.0 patch marker is missing.");
+        string patched1135 = PatcherEngine.PatchRuntimeText(BuildV1135Fixture());
+        Assert(patched1135.Contains(PatcherEngine.PatchMarker), "Current v3.2.0 patch marker is missing in v1135.");
         Assert(PatcherEngine.PatchMarker == "QODER_CN_OAI_PATCH_V3_2_0", "Patch marker version mismatch.");
-        Assert(patched.Contains("custom-openai-provider-v3.2.0.json"), "v3.2.0 runtime configuration fallback is missing.");
-        Assert(patched.Contains("custom-openai-provider-v3.1.0.json"), "v3.1.0 runtime configuration fallback is missing.");
-        Assert(patched.Contains("process.env[\"QODER_CN_KEY_\"+(n.providerId||\"\")]||process.env.QODER_CN_CUSTOM_PROVIDER_API_KEY||t?.parameters?.api_key"), "Multi-provider API key lookup is missing.");
-        Assert(!patched.Contains("qcv30target(A){try{"), "Direct-route errors are still swallowed by an outer try/catch.");
-        Assert(!patched.Contains("api_key:e.apiKey") && !patched.Contains("api_key:qcc.apiKey"), "Injected model metadata still reads API keys from JSON.");
+        Assert(patched1135.Contains("custom-openai-provider-v3.2.0.json"), "v3.2.0 runtime configuration fallback is missing.");
+        Assert(patched1135.Contains("custom-openai-provider-v3.1.0.json"), "v3.1.0 runtime configuration fallback is missing.");
+        Assert(patched1135.Contains("process.env[\"QODER_CN_KEY_\"+(n.providerId||\"\")]||process.env.QODER_CN_CUSTOM_PROVIDER_API_KEY||t?.parameters?.api_key"), "Multi-provider API key lookup is missing.");
+        Assert(!patched1135.Contains("qcv30target(A){try{"), "Direct-route errors are still swallowed by an outer try/catch.");
+        Assert(!patched1135.Contains("api_key:e.apiKey") && !patched1135.Contains("api_key:qcc.apiKey"), "Injected model metadata still reads API keys from JSON.");
+
+        string patched1131 = PatcherEngine.PatchRuntimeText(BuildV1131Fixture());
+        Assert(patched1131.Contains(PatcherEngine.PatchMarker), "Current v3.2.0 patch marker is missing in v1131.");
+        Assert(patched1131.Contains("function XxA(A){/*" + PatcherEngine.PatchMarker), "v1131 converter marker missing.");
     }
 
     private static void TestUpgradeChainDetection()

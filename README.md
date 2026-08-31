@@ -1,13 +1,13 @@
-# Qoder CN OpenAI-Compatible Gateway Manager (v3.2.0)
+# Qoder CN OpenAI-Compatible Gateway Manager (v3.2.1)
 
 一个针对 Qoder CN 桌面版的原生可视化管理与运行时补丁项目，用于接入自定义 OpenAI-compatible Provider、Ollama、vLLM 和自建局域网网关（如 CPA）。
 
 ## 当前状态
 
-本仓库当前版本为 **v3.2.0**，目标版本为：
+本仓库当前版本为 **v3.2.1**，目标支持版本为：
 
-- Qoder CN Desktop `0.1.2`
-- Qoder CN Runtime / CLI `1.1.31`
+- Qoder CN Desktop `0.1.3+` / `0.1.2`
+- Qoder CN Runtime / CLI `1.1.35` / `1.1.31`
 
 已经验证：
 
