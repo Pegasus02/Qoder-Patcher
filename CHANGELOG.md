@@ -1,5 +1,28 @@
 # Changelog
 
+## 3.2.3 - 2026-09-04
+
+- **macOS 适配 Qoder CN 新版运行时 (v1.1.40 / Qoder 0.1.6)**：
+  - 逆向提取 `1.1.40` 重新混淆后的全部 9 处注入特征点：模型转换函数 `TvA` → `GMA`、成功响应发送器 `Di` → `Gn`、直连推理 helper `bje` → `dOe`、启动注入函数 `ree`/`$Oe` → `M$A`/`e6e`、模型列表函数 `FIo` → `FCo`；`node:fs` 导入锚点、模型 URL 锚点与 `getModel` 解析锚点保持不变。
+  - 修复升级后 macOS 版状态检测返回 `unknown`、主操作按钮变为「⚠️ 无法操作」的问题。
+- **修复直接注入模型在模型下拉列表中消失的问题**：
+  - Qoder CN 0.1.6 主进程 (`app.asar`) 新增 `listModels().filter(lNe)` 机制，硬编码过滤掉 `source === "user"` 的模型。
+  - 补丁转换器 (`GMA`) 与注入模型元数据统一调整为 `source: "system"`，直接注入的模型不再被主进程丢弃，正常在会话模型选择器中展示。
+- **修复 BYOK 设置界面无法正常添加模型（凭证验证失败）的问题**：
+  - 修复 `validate_byok_model` 绕过逻辑中对 `url` (`A`) 的解构与 `new URL(A)` 校验：当添加内置提供商模型时（未配置自定义 `url`，`A` 为 `undefined`），避免触发未捕获的 `TypeError: Invalid URL` 导致旁路跳出并错误回退到云端校验而报错 `BYOK_CREDENTIAL_VALIDATION_FAILED`。
+  - 补丁目标提取器 (`qcv30target`) 兼容读取 `custom_model.api_key`，确保通过 BYOK 添加的模型在发起会话时能够正常读取并解密用户填写的 API Key。
+- **版本基线表重构 (Runtime Profile Table)**：
+  - 将原先散落在 9 个注入点上的 `isV1135` / `isV1131` 布尔分支收敛为集中的 `RuntimeProfiles` 数据表，各版本仅保留混淆标识符差异，注入载荷模板完全共享。
+  - 后续适配新版运行时只需新增一条表项，无需再改动注入逻辑。
+  - 经逐字节回归验证：`1.1.35` 基线的补丁产物与重构前完全一致 (SHA256 `69a12ee4…`)。
+- **运行时版本识别增强**：
+  - 新增读取运行时同目录下的 `runtime-info.json`，即使当前版本尚未适配，也能报出真实版本号（如「检测到 Qoder CN 运行时 1.1.42，Patcher 尚未适配该版本」），不再笼统显示「未知版本运行库」。
+  - CLI `status` 增加「运行时版本」输出，GUI 诊断面板版本字段同步显示真实版本号并标注「(未适配)」。
+- **跨版本备份写回防护**：
+  - 备份清单新增 `runtimeVersion` 与 `profileId` 字段；历史清单可通过纯净基线 SHA256 反查所属版本。
+  - `restore` 与 `apply` 升级路径在写回前比对备份所属版本与当前安装版本，不一致时中止并给出明确提示，避免把旧版运行时覆盖到新安装上导致 Qoder CN 无法启动。
+  - CLI 新增 `--force` 开关用于主动降级 Qoder CN 后的强制写回。
+
 ## 3.2.2 - 2026-09-01
 
 - **修复 Windows 原生客户端 Provider 模型列表解析与拉取问题**：

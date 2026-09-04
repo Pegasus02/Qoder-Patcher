@@ -48,6 +48,7 @@ async function run() {
       console.log(`运行库存在: ${state.runtimeExists ? '✅ 是' : '❌ 否'}`);
       console.log(`运行库 SHA256: ${state.runtimeSha256 || 'N/A'}`);
       console.log(`ASAR SHA256: ${state.asarSha256 || 'N/A'}`);
+      console.log(`运行时版本: ${state.runtimeVersion || 'N/A'}`);
       console.log(`补丁状态: ${state.statusText}`);
       console.log(`识别版本: ${state.detectedVersion}`);
       console.log(`Qoder 运行中: ${state.isRunning ? '⚡ 是' : '⚪ 否'}`);
@@ -64,7 +65,7 @@ async function run() {
       console.log(`[1/2] 运行时配置已写入: ${getDefaultConfigPath()}`);
 
       console.log(`[2/2] 正在修补运行库并创建备份...`);
-      const res = applyPatch(installDir);
+      const res = applyPatch(installDir, getDefaultBackupRoot(), args.includes('--force'));
       if (res.upgraded) {
         console.log(`[SUCCESS] 升级成功！已基于历史备份 (${res.backupId}) 升级至 v3.2.0。`);
       } else {
@@ -76,7 +77,7 @@ async function run() {
     case 'restore': {
       const backupId = getArgVal('--backup-id', null);
       console.log(`\n=== 恢复 Qoder CN 官方原版运行库 ===`);
-      const manifest = restorePatch(installDir, getDefaultBackupRoot(), backupId);
+      const manifest = restorePatch(installDir, getDefaultBackupRoot(), backupId, args.includes('--force'));
       console.log(`[SUCCESS] 还原成功！已恢复官方未修改版本 (来自备份 ${manifest.backupId})。`);
       break;
     }

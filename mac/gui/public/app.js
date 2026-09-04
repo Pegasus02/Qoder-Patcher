@@ -321,7 +321,9 @@ function renderDiagnostics() {
   document.getElementById('diag-app-path').textContent = targetState.installDir || '-';
   document.getElementById('diag-runtime-sha').textContent = targetState.runtimeSha256 || '-';
   document.getElementById('diag-asar-sha').textContent = targetState.asarSha256 || '-';
-  document.getElementById('diag-version').textContent = targetState.detectedVersion || '-';
+  document.getElementById('diag-version').textContent = targetState.runtimeVersion
+    ? `${targetState.runtimeVersion}${targetState.detectedVersion === 'unknown' ? ' (未适配)' : ''}`
+    : (targetState.detectedVersion || '-');
   document.getElementById('diag-secret-dir').textContent = targetState.secretStoreDir || '-';
   document.getElementById('diag-config-path').textContent = targetState.configPath || '-';
 }

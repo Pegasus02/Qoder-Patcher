@@ -4,7 +4,7 @@ set -e
 PROJECT_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 APP_NAME="QoderCN-Patcher"
 APP_BUNDLE="$PROJECT_ROOT/bin/$APP_NAME.app"
-DMG_PATH="$PROJECT_ROOT/bin/$APP_NAME-macOS-v3.2.0.dmg"
+DMG_PATH="$PROJECT_ROOT/bin/$APP_NAME-macOS-v3.2.3.dmg"
 
 echo "=== 正在构建 macOS 原生应用: $APP_NAME.app ==="
 
@@ -50,9 +50,9 @@ cat << 'PLIST' > "$APP_BUNDLE/Contents/Info.plist"
     <key>CFBundleIdentifier</key>
     <string>ai.qoder.patcher.mac</string>
     <key>CFBundleVersion</key>
-    <string>3.2.0</string>
+    <string>3.2.3</string>
     <key>CFBundleShortVersionString</key>
-    <string>3.2.0</string>
+    <string>3.2.3</string>
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>CFBundleSignature</key>
@@ -136,7 +136,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             defer: false
         )
         window.center()
-        window.title = "Qoder CN OpenAI-Compatible Gateway Manager (v3.2.0)"
+        window.title = "Qoder CN OpenAI-Compatible Gateway Manager (v3.2.3)"
         window.titlebarAppearsTransparent = true
         window.titleVisibility = .visible
         window.delegate = self
